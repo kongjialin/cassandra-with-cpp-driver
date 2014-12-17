@@ -1,4 +1,4 @@
-#include "cassandra.h"
+#include "storage/driver/cassandra.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +20,7 @@ DEFINE_string(contact_points, "127.0.0.1",
               "Comma delimited ip addreses of contact points");
 DEFINE_string(log_level, "INFO",
               "Cassandra log level:TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL");
-DEFINE_string(operation_type, "INSERT", "Type of operation: STORE, RETRIEVE");
+DEFINE_string(operation_type, "STORE", "Type of operation: STORE, RETRIEVE");
 DEFINE_int32(operation_count, 10000, "Count of Operations");
 DEFINE_int32(num_threads, 1, "Number of threads making requests");
 DEFINE_int32(num_threads_io, 0,
@@ -109,7 +109,8 @@ void StressDriver::InitLogLevelMap() {
 
 void StressDriver::PrintError(CassFuture* future) {
   CassString message = cass_future_error_message(future);
-  fprintf(stderr, "Error: %.*s\n", (int)message.length, message.data);
+  fprintf(stdout, "Error: %.*s\n", (int)message.length, message.data);
+  printf("print error\n");
 }
 
 void StressDriver::CreateCluster() {
@@ -209,7 +210,7 @@ void StressDriver::Store(int thread_index, Functor<void>* finish) {
   Message message;
   for (int i = 0; i < iteration_num; ++i) {
     RandomMessage::GenerateMessage(&message);
-    CassFuture* futures[FLAGS_ops_per_batch];
+    CassFuture** futures = new CassFuture*[FLAGS_ops_per_batch];
     for (int j = 0; j < FLAGS_ops_per_batch; ++j) {
       CassStatement* statement = cass_prepared_bind(prepared_);
       cass_statement_bind_string(statement, 0,
@@ -231,7 +232,6 @@ void StressDriver::Store(int thread_index, Functor<void>* finish) {
       metadata->index = index;
       metadata->obj_this = this;
       metadata->thread_index = thread_index;
-      latencies_[index] = GetTimeStampInUs();
       
       auto cb = [](CassFuture* future, void* data) {
         int64_t end_time = GetTimeStampInUs();
@@ -248,11 +248,17 @@ void StressDriver::Store(int thread_index, Functor<void>* finish) {
         delete meta;
       };
 
+      latencies_[index] = GetTimeStampInUs();
       futures[j] = cass_session_execute(session_, statement);
       cass_future_set_callback(futures[j], cb, metadata);
-      cass_future_free(futures[j]);
       cass_statement_free(statement);
     }
+    for (int j = 0; j < FLAGS_ops_per_batch; ++j) {
+      CassFuture* future = futures[j];
+      cass_future_wait(future);
+      cass_future_free(future);
+    }
+    delete [] futures;
   }
 }
 
@@ -263,10 +269,10 @@ void StressDriver::Retrieve(int thread_index, Functor<void>* finish) {
   int iteration_num =
       FLAGS_operation_count / (FLAGS_num_threads * FLAGS_ops_per_batch);
   int index;
-  std::string receiver;
   for (int i = 0; i < iteration_num; ++i) {
+    std::string receiver;
     RandomMessage::GenerateString(&receiver);
-    CassFuture* futures[FLAGS_ops_per_batch];
+    CassFuture** futures = new CassFuture*[FLAGS_ops_per_batch];
     for (int j = 0; j < FLAGS_ops_per_batch; ++j) {
       CassStatement* statement = cass_prepared_bind(prepared_);
       cass_statement_bind_string(statement, 0,
@@ -278,7 +284,6 @@ void StressDriver::Retrieve(int thread_index, Functor<void>* finish) {
       metadata->thread_index = thread_index;
       metadata->index = index;
       metadata->obj_this = this;
-      latencies_[index] = GetTimeStampInUs();
 
       auto retrieve_cb = [](CassFuture* future, void* data) {
         int64_t end_time = GetTimeStampInUs();
@@ -295,11 +300,17 @@ void StressDriver::Retrieve(int thread_index, Functor<void>* finish) {
         delete meta;
       };
 
+      latencies_[index] = GetTimeStampInUs();
       futures[j] = cass_session_execute(session_, statement);
       cass_future_set_callback(futures[j], retrieve_cb, metadata);
-      cass_future_free(futures[j]);
       cass_statement_free(statement);
     }
+    for (int j = 0; j < FLAGS_ops_per_batch; ++j) {
+      CassFuture* future = futures[j];
+      cass_future_wait(future);
+      cass_future_free(future);
+    }
+    delete [] futures;
   }
 }
 
@@ -334,6 +345,10 @@ void StressDriver::PrintResults() {
   printf(".999 latency: %f ms\n",
          RankLatency(0.999, latencies_, FLAGS_operation_count));
   printf("Max latency: %f ms\n", latencies_[FLAGS_operation_count - 1]);
+  for (int i = 0; i <= 100; ++i) {
+    printf("%d, %f\n", i, RankLatency(i/100.0, latencies_,
+          FLAGS_operation_count));
+  }
 }
 
 } // namespace pushing
