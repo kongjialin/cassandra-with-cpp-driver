@@ -1,0 +1,9 @@
+// CQL commands
+// 1. create keyspace and use it
+CREATE KEYSPACE offline_keyspace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};USE offline_keyspace;
+
+// 2. create table
+CREATE TABLE receiver_table (receiver_id varchar, ts varchar, msg_id varchar, group_id varchar, msg varchar, sender_id varchar, PRIMARY KEY(receiver_id, ts, msg_id)) WITH default_time_to_live = 604800 AND CLUSTERING ORDER BY (ts DESC, msg_id ASC) AND gc_grace_seconds=86400;
+
+// 3. describe the table we create;
+DESCRIBE TABLE receiver_table;

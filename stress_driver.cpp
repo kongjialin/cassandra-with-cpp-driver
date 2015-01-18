@@ -110,7 +110,6 @@ void StressDriver::InitLogLevelMap() {
 void StressDriver::PrintError(CassFuture* future) {
   CassString message = cass_future_error_message(future);
   fprintf(stdout, "Error: %.*s\n", (int)message.length, message.data);
-  printf("print error\n");
 }
 
 void StressDriver::CreateCluster() {
