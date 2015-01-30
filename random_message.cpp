@@ -78,7 +78,7 @@ void RandomMessage::GenerateMessage(Message* message) {
   message->__set_msg_id("11111");
   message->__set_group_id("12345");
   message->__set_msg("This is a message generated in Cassandra stress testing");
-  message->__set_sender_id("jialin.kong@email.com");
+  message->__set_sender_id("kongjialin92@gmail.com");
 }
 
 void RandomMessage::GenerateString(std::string* str) {
