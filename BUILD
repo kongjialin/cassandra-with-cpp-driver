@@ -1,7 +1,14 @@
 cc_library(
     name = 'random_message',    
-    srcs = 'random_message.cpp',
-    deps = '//common/idl:message_thrift',
+    srcs = [
+        'murmurhash3.cpp',
+        'random_message.cpp',
+    ],
+    deps = [
+        '//common/idl:message_thrift',
+        '//thirdparty/cass:cassandra_thrift',
+        '//thirdparty/gflags:gflags',
+    ],
 )
 
 cc_library(
@@ -34,11 +41,27 @@ cc_binary(
 cc_binary(
    name = 'cass_driver_example',
    srcs = 'cass_driver_example.cpp',
-    deps = [
+   deps = [
         ':cass_driver',
         '//thirdparty/boost:boost_chrono',
         '//thirdparty/boost:boost_system',
         '//thirdparty/boost:boost_thread',
+   ],
+)
+
+cc_binary(
+   name = 'cass_stress',
+   srcs = 'cass_stress.cpp',
+   deps = [
+       ':cass_driver',
+       ':random_message',
+       '//common/base:timestamp',
+       '//common/idl:message_thrift',
+       '//thirdparty/gflags:gflags',
+       '//thirdparty/boost:boost_chrono',
+       '//thirdparty/boost:boost_system',
+       '//thirdparty/boost:boost_thread',
+       '#rt',
    ],
 )
 
@@ -67,5 +90,4 @@ cc_binary(
         './yamlcpp/yaml-cpp',
     ]
 )
-
 

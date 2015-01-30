@@ -28,13 +28,13 @@ class CassDriver {
              const Message& message, void* cb_data);
   void Retrieve(std::tr1::function<void(bool success, Wrapper* data)> cob,
                 const std::string& receiver_id, Wrapper* data_wrapper);
+  void PrintError(CassFuture* future);
  
  private:
   void InitLogLevelMap();
   void CreateCluster();
   CassLogLevel ParseLogLevel(std::string& log_level);
   void ConnectSession();
-  void PrintError(CassFuture* future);
   void PrepareQuery();
   CassCluster* cluster_;
   CassSession* session_;

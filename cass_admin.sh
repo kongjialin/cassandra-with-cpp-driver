@@ -1,7 +1,6 @@
 #!/bin/bash
 
-CASSANDRA_VERSION=2.1.2
-CASSANDRA_DISTRIBUTION=apache-cassandra-$CASSANDRA_VERSION
+CASSANDRA_DISTRIBUTION=apache-cassandra-2.1.2
 CASSANDRA_HOME=~/proj/$CASSANDRA_DISTRIBUTION
 
 init()
@@ -23,7 +22,7 @@ init()
     echo "CASSANDRA_HOME=$CASSANDRA_HOME" | sudo tee -a /etc/environment
     source /etc/environment
 
-    tsocks wget http://www.us.apache.org/dist/cassandra/$CASSANDRA_VERSION/$CASSANDRA_DISTRIBUTION-bin.tar.gz
+    tsocks wget http://www.us.apache.org/dist/cassandra/2.1.2/$CASSANDRA_DISTRIBUTION-bin.tar.gz
     tar -zxvf $CASSANDRA_DISTRIBUTION-bin.tar.gz
     cp ./cass_yaml_config $CASSANDRA_DISTRIBUTION/conf/
 
@@ -36,8 +35,12 @@ init()
 
 stop()
 {
-    ./$CASSANDRA_DISTRIBUTION/bin/nodetool stopdaemon 2>/dev/null
-    echo "Cassandra stopped."
+    num=`ps -ef | grep CassandraDaemon | wc -l`                                                                
+    if [ $num != 1 ]
+    then
+        ./$CASSANDRA_DISTRIBUTION/bin/nodetool stopdaemon
+        echo "Cassandra stopped."
+    fi
 }
 
 restart()

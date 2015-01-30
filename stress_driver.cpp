@@ -356,6 +356,7 @@ using namespace pushing;
 int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, false);
 
+  RandomMessage::PrepareRowKeySet();
   StressDriver stress_driver;
   CassError rc = CASS_OK;
   rc = stress_driver.ConnectSession();

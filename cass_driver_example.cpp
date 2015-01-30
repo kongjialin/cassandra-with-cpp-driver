@@ -1,4 +1,4 @@
-#include "cass_driver.h"
+#include "storage/cass_driver.h"
 
 #include <iostream>
 
@@ -38,7 +38,7 @@ void run_example(CassDriver& cass_driver) {
   cass_driver.Store(store_cb, message, cb_struct);
 
   // Retrieve
-  std::string receiver = "aaaa";
+  std::string receiver = "333";
   CassDriver::Wrapper* wrapper = new CassDriver::Wrapper();
   wrapper->pmsgs = new std::vector<boost::shared_ptr<Message>>;
   char* cb = "I am a customized struct";//

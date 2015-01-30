@@ -128,7 +128,7 @@ void CassDriver::PrepareQuery() {
 
   rc = CASS_OK;
   CassString delete_query = cass_string_init("DELETE FROM receiver_table "
-      "WHERE receiver_id = ? AND ts = ? AND msg_id = ?");
+      "WHERE receiver_id = ?");
   CassFuture* delete_future = cass_session_prepare(session_, delete_query);
   cass_future_wait(delete_future);
   rc = cass_future_error_code(delete_future);
@@ -189,18 +189,6 @@ void CassDriver::Retrieve(
           cass_value_get_string(cass_row_get_column(row, 4), &cass_msg);
           cass_value_get_string(cass_row_get_column(row, 5), &cass_sender);
             
-          CassStatement* statement =
-              cass_prepared_bind(wrapper->this_obj->delete_prepared_);
-          cass_statement_bind_string(statement, 0, cass_receiver);
-          cass_statement_bind_string(statement, 1, cass_time);
-          cass_statement_bind_string(statement, 2, cass_msg_id);
-          CassFuture* delete_future =
-              cass_session_execute(wrapper->this_obj->session_, statement);
-          cass_future_set_callback(delete_future,
-              [](CassFuture* future, void* data) {}, NULL);
-          cass_future_free(delete_future);
-          cass_statement_free(statement);
-
           std::string receiver(cass_receiver.data, cass_receiver.length);
           std::string time(cass_time.data, cass_time.length);
           std::string msg_id(cass_msg_id.data, cass_msg_id.length);
@@ -223,6 +211,14 @@ void CassDriver::Retrieve(
           (wrapper->func)();
         } else {
           cass_statement_free(wrapper->statement);
+          CassStatement* statement =
+              cass_prepared_bind(wrapper->this_obj->delete_prepared_);
+          cass_statement_bind_string(statement, 0, cass_receiver);
+          CassFuture* delete_future =
+              cass_session_execute(wrapper->this_obj->session_, statement);
+          cass_future_free(delete_future);
+          cass_statement_free(statement);
+
           (wrapper->cob)(true, wrapper);
         }
         cass_iterator_free(iterator);
