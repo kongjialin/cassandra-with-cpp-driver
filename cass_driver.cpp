@@ -45,7 +45,7 @@ CassDriver::~CassDriver() {
 }
 
 void CassDriver::InitLogLevelMap() {
-#define XX(log_level, str) \
+#define XX(log_level, str) \  // X MACRO
   log_level_map_.insert(std::pair<std::string, CassLogLevel>(str, log_level));
   CASS_LOG_LEVEL_MAP(XX);
 #undef XX
